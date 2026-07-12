@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Patchouli Markdown Server</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">P</span>
+      <div>
+        <strong>Patchouli Markdown</strong>
+        <small>WASM parser workspace</small>
+      </div>
+    </div>
+    <div class="document-title">
+      <span id="current-path">未选择文件</span>
+      <span id="dirty-indicator" class="dirty-indicator" hidden>未保存</span>
+    </div>
+    <div class="top-actions">
+      <button id="new-file" class="button ghost">新建</button>
+      <button id="rename-file" class="button ghost" disabled>重命名</button>
+      <button id="delete-file" class="button ghost danger" disabled>删除</button>
+      <button id="backup-now" class="button ghost">立即备份</button>
+      <button id="save-file" class="button primary" disabled>保存 <kbd>Ctrl S</kbd></button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div>
+          <strong>文档</strong>
+          <span id="file-count" class="muted">0</span>
+        </div>
+        <button id="refresh-files" class="icon-button" title="刷新文件列表" aria-label="刷新文件列表">↻</button>
+      </div>
+      <label class="file-filter">
+        <span>⌕</span>
+        <input id="file-filter" type="search" placeholder="筛选路径">
+      </label>
+      <nav id="file-list" class="file-list" aria-label="文档文件"></nav>
+      <div class="sidebar-status">
+        <span id="parser-dot" class="status-dot"></span>
+        <span id="parser-status">检查 parser…</span>
+      </div>
+    </aside>
+
+    <section class="editor-pane">
+      <div class="pane-header">
+        <span>Markdown 源文件</span>
+        <div class="pane-meta">
+          <span id="revision-label">revision —</span>
+          <span id="save-status">未打开文件</span>
+        </div>
+      </div>
+      <div class="editor-wrap">
+        <pre id="line-numbers" class="line-numbers" aria-hidden="true">1</pre>
+        <textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" disabled placeholder="从左侧选择文件"></textarea>
+      </div>
+    </section>
+
+    <section class="preview-pane">
+      <div class="pane-header preview-header">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="preview" role="tab">预览</button>
+          <button class="tab" data-tab="warnings" role="tab">问题 <span id="problem-badge" class="badge">0</span></button>
+          <button class="tab" data-tab="ast" role="tab">AST</button>
+        </div>
+        <span id="parse-status" class="pane-meta">等待解析</span>
+      </div>
+      <div id="preview" class="tab-panel preview-content active"></div>
+      <div id="warnings" class="tab-panel diagnostics"></div>
+      <pre id="ast" class="tab-panel ast-view"></pre>
+    </section>
+  </main>
+
+  <dialog id="path-dialog" class="small-dialog">
+    <form method="dialog" id="path-form">
+      <h2 id="path-dialog-title">新建文件</h2>
+      <p id="path-dialog-description">输入相对于文档根目录的路径。</p>
+      <label>
+        文件路径
+        <input id="path-input" required autocomplete="off" placeholder="categories/metals.md">
+      </label>
+      <div id="path-error" class="dialog-error" hidden></div>
+      <div class="dialog-actions">
+        <button id="path-cancel" type="button" class="button ghost">取消</button>
+        <button id="path-submit" type="submit" class="button primary">确认</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="merge-dialog" class="merge-dialog">
+    <div class="merge-shell">
+      <header class="merge-header">
+        <div>
+          <span class="eyebrow">REVISION CONFLICT</span>
+          <h2>文件在编辑期间已被其他用户修改</h2>
+          <p>比较读取时版本、本地编辑和服务器当前版本，然后编辑最终结果。</p>
+        </div>
+        <button id="close-merge" class="icon-button large" aria-label="关闭合并界面">×</button>
+      </header>
+
+      <div class="merge-columns">
+        <section class="merge-column">
+          <header><strong>Base</strong><span>你开始编辑时读取的内容</span></header>
+          <textarea id="merge-base" readonly></textarea>
+        </section>
+        <section class="merge-column yours">
+          <header><strong>Yours</strong><span>你的未保存内容</span></header>
+          <textarea id="merge-yours" readonly></textarea>
+        </section>
+        <section class="merge-column server">
+          <header><strong>Server</strong><span>服务器上的最新内容</span></header>
+          <textarea id="merge-server" readonly></textarea>
+        </section>
+      </div>
+
+      <section class="merge-result-section">
+        <header class="merge-result-header">
+          <div>
+            <strong>合并结果</strong>
+            <span id="merge-conflict-count">0 个待解决冲突</span>
+          </div>
+          <div class="merge-tools">
+            <button id="merge-auto" class="button ghost">重新自动合并</button>
+            <button id="merge-use-yours" class="button ghost">全部采用 Yours</button>
+            <button id="merge-use-server" class="button ghost">全部采用 Server</button>
+            <span class="separator"></span>
+            <button id="resolve-yours" class="button compact">当前冲突：Yours</button>
+            <button id="resolve-server" class="button compact">当前冲突：Server</button>
+            <button id="resolve-both" class="button compact">当前冲突：两者</button>
+          </div>
+        </header>
+        <textarea id="merge-result" spellcheck="false"></textarea>
+      </section>
+
+      <footer class="merge-footer">
+        <span id="merge-message">保存时会以 Server revision 为新基线再次执行原子比较。</span>
+        <button id="save-merge" class="button primary">保存合并结果</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <div id="toast-region" class="toast-region" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+parser-dist/*.wasm
+parser-dist/ghc_wasm_jsffi.mjs
+backups/*
+!backups/.gitkeep
+.patchouli-editor-locks/

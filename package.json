@@ -1,0 +1,16 @@
+{
+  "name": "patchouli-markdown-server",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Server-backed collaborative editor for patchouli-markdown's WASM parser dialect",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "test": "DOCUMENT_ROOT=./book-md BACKUP_ROOT=./backups node server.mjs",
+    "check": "node --check server.mjs && node --check public/app.js && node --check public/merge.js && node --check public/ast-renderer.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
