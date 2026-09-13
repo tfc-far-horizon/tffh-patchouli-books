@@ -15,6 +15,7 @@ import {
 } from './lib/storage.mjs';
 import { PatchouliWasmParser } from './lib/parser.mjs';
 import { convertIgemAstToPatchouli } from './lib/converter.mjs';
+import { patchouliBookToMarkdown } from './lib/patchouli-format.mjs';
 import { createBackup, listBackups, pruneBackups, startBackupScheduler } from './lib/backups.mjs';
 
 const config = loadConfig();
@@ -134,6 +135,15 @@ async function handleApi(request, response, url) {
       return writeJson(response, 200, { ...converted, parserWarnings: parsed.document?.[1] ?? [] });
     } catch (error) {
       return writeJson(response, 503, { error: 'converter_unavailable', message: error.message, parser: parser.status });
+    }
+  }
+
+  if (request.method === 'POST' && url.pathname === '/api/export') {
+    const body = await readJson(request);
+    try {
+      return writeJson(response, 200, { content: patchouliBookToMarkdown(body) });
+    } catch (error) {
+      throw new HttpError(400, 'invalid_patchouli_book', error.message);
     }
   }
 

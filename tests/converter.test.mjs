@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { convertIgemAstToPatchouli } from '../lib/converter.mjs';
+import { patchouliBookToMarkdown, patchouliTextToIgem } from '../lib/patchouli-format.mjs';
 import { loadConfig } from '../lib/config.mjs';
 import { PatchouliWasmParser } from '../lib/parser.mjs';
 
@@ -54,4 +55,16 @@ test('converts the real igem-markdown parser fixture end to end', async () => {
   assert.ok(result.files.some((file) => file.path.endsWith('/basic_inline_elements_and_math_formulas.json')));
   assert.ok(result.files.some((file) => file.content.includes('patchouli:image')));
   assert.ok(result.files.some((file) => file.content.includes('$(bold)')));
+});
+
+test('uses Patchouli control-code conventions for JSON to igem Markdown', () => {
+  assert.equal(patchouliTextToIgem('a$(br)b$(br2)$(bold)c$() $(l:x/y)link$()'), 'a\nb\n\n^c^ [link](x/y)');
+  const markdown = patchouliBookToMarkdown({
+    category: { id: 'cat', name: '分类' },
+    entries: [{ id: 'cat/entry', name: '条目', pages: [{ type: 'patchouli:text', text: 'a$(br2)^b^' }] }],
+  });
+  assert.match(markdown, /```patchouli-category/);
+  assert.match(markdown, /```patchouli-entry/);
+  assert.match(markdown, /\+ _untitled_/);
+  assert.match(markdown, /\^b\^/);
 });

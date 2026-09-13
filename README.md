@@ -212,6 +212,7 @@ POST /api/backups
 | `POST` | `/api/rename` | revision 条件重命名 |
 | `POST` | `/api/parse` | 调用仓库 WASM parser |
 | `POST` | `/api/convert` | 将 igem-markdown 内容转换为 Patchouli JSON 文件集合（只生成，不写盘） |
+| `POST` | `/api/export` | 将 Patchouli JSON book model 按既有符号约定导出为 igem Markdown |
 | `GET` | `/api/backups` | 列出快照 |
 | `POST` | `/api/backups` | 立即创建快照 |
 

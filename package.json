@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Server-backed collaborative editor for patchouli-markdown's WASM parser dialect",
+  "dependencies": {
+    "yaml": "^2.9.0"
+  },
   "scripts": {
     "start": "node server.mjs",
     "dev": "node --watch server.mjs",
