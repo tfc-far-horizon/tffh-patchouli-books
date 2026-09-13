@@ -7,8 +7,9 @@
   "scripts": {
     "start": "node server.mjs",
     "dev": "node --watch server.mjs",
-    "test": "DOCUMENT_ROOT=./book-md BACKUP_ROOT=./backups node server.mjs",
-    "check": "node --check server.mjs && node --check public/app.js && node --check public/merge.js && node --check public/ast-renderer.js"
+    "convert": "node scripts/convert-book.mjs",
+    "test": "node --test tests/*.mjs",
+    "check": "node --check server.mjs && node --check lib/converter.mjs && node --check scripts/convert-book.mjs && node --check public/app.js && node --check public/merge.js && node --check public/ast-renderer.js"
   },
   "engines": {
     "node": ">=22"

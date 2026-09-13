@@ -211,8 +211,40 @@ POST /api/backups
 | `DELETE` | `/api/file?path=...` | revision 条件删除 |
 | `POST` | `/api/rename` | revision 条件重命名 |
 | `POST` | `/api/parse` | 调用仓库 WASM parser |
+| `POST` | `/api/convert` | 将 igem-markdown 内容转换为 Patchouli JSON 文件集合（只生成，不写盘） |
 | `GET` | `/api/backups` | 列出快照 |
 | `POST` | `/api/backups` | 立即创建快照 |
+
+## igem 书迁移 dry-run
+
+使用 `igem-markdown` 新书生成 TFC Patchouli JSON 文件集合，不会修改旧书：
+
+```bash
+node scripts/convert-book.mjs source.md migration.json generated/
+```
+
+`migration.json` 至少需要提供 category：
+
+```json
+{
+  "category": {
+    "id": "getting_started",
+    "name": "新手入门",
+    "icon": "tfc:stone/axe/sedimentary",
+    "sortnum": 1
+  },
+  "entries": {
+    "0": {
+      "id": "getting_started/introduction",
+      "icon": "tfc:rock/loose/granite",
+      "read_by_default": true
+    }
+  }
+}
+```
+
+命令同时生成 `generated/conversion-warnings.json`。输出目录已存在时命令会失败，只有明确传入
+`--force` 才允许覆盖。
 
 ## Docker
 

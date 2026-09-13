@@ -14,6 +14,7 @@ import {
   renameFile,
 } from './lib/storage.mjs';
 import { PatchouliWasmParser } from './lib/parser.mjs';
+import { convertIgemAstToPatchouli } from './lib/converter.mjs';
 import { createBackup, listBackups, pruneBackups, startBackupScheduler } from './lib/backups.mjs';
 
 const config = loadConfig();
@@ -117,6 +118,22 @@ async function handleApi(request, response, url) {
         message: error.message,
         parser: parser.status,
       });
+    }
+  }
+
+  if (request.method === 'POST' && url.pathname === '/api/convert') {
+    const body = await readJson(request);
+    if (typeof body.content !== 'string') throw new HttpError(400, 'invalid_content', 'content must be a string.');
+    if (!body.category || typeof body.category.id !== 'string' || typeof body.category.name !== 'string') {
+      throw new HttpError(400, 'invalid_category', 'category.id and category.name are required.');
+    }
+    try {
+      const parsed = await parser.parse(body.content);
+      if (!parsed.ok) return writeJson(response, 422, { error: 'source_parse_failed', parse: parsed });
+      const converted = convertIgemAstToPatchouli(parsed.document, { category: body.category, entries: body.entries });
+      return writeJson(response, 200, { ...converted, parserWarnings: parsed.document?.[1] ?? [] });
+    } catch (error) {
+      return writeJson(response, 503, { error: 'converter_unavailable', message: error.message, parser: parser.status });
     }
   }
 
