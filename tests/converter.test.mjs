@@ -68,3 +68,14 @@ test('uses Patchouli control-code conventions for JSON to igem Markdown', () => 
   assert.match(markdown, /\+ _untitled_/);
   assert.match(markdown, /\^b\^/);
 });
+
+test('uses raw JSON for nested multimultiblock pages', () => {
+  const markdown = patchouliBookToMarkdown({
+    category: { id: 'mechanics', name: 'Mechanics' },
+    entries: [{ id: 'mechanics/power', name: 'Power', pages: [{
+      type: 'tfc:multimultiblock', multiblocks: ['a', 'b'], text: 'keep this',
+    }] }],
+  });
+  assert.match(markdown, /```raw\/tfc:multimultiblock/);
+  assert.match(markdown, /"multiblocks": \[/);
+});
